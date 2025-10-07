@@ -1,14 +1,15 @@
-import { Server, Socket } from 'socket.io';
+import { Server, Socket } from "socket.io";
 
 // Mock Socket instance
 export const createMockSocket = (): jest.Mocked<Socket> => {
   const mockSocket = {
-    id: 'mock-socket-id',
+    id: "mock-socket-id",
     connected: true,
     disconnected: false,
 
     // Mock event listeners
     on: jest.fn((event: string, callback: Function) => {
+      callback();
       return mockSocket;
     }),
 
@@ -24,9 +25,9 @@ export const createMockSocket = (): jest.Mocked<Socket> => {
     disconnect: jest.fn((close?: boolean) => mockSocket),
     broadcast: {
       to: jest.fn((room: string) => ({
-        emit: jest.fn()
-      }))
-    }
+        emit: jest.fn(),
+      })),
+    },
   } as any;
 
   return mockSocket;
@@ -54,7 +55,7 @@ export const createMockServer = (): jest.Mocked<Server> => {
       sockets: new Map(),
       emit: jest.fn(),
       in: jest.fn(() => ({ emit: jest.fn() })),
-      to: jest.fn(() => ({ emit: jest.fn() }))
+      to: jest.fn(() => ({ emit: jest.fn() })),
     },
 
     // Mock other commonly used server methods
@@ -62,8 +63,8 @@ export const createMockServer = (): jest.Mocked<Server> => {
     close: jest.fn(),
     adapter: {
       rooms: new Map(),
-      sockets: new Map()
-    } as any
+      sockets: new Map(),
+    } as any,
   } as any;
 
   return mockServer;

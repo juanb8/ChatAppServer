@@ -52,8 +52,7 @@ describe("MessageService Unit test suite", (): void => {
         event: string,
         callback: (...args: any[]) => any,
       ): jest.Mocked<Server> => {
-        console.log("entró en on");
-        if (event === "connection")
+        if (event == "connection")
           connectionCallback = callback as (socket: Socket) => void;
         return mockServer;
       },
@@ -67,8 +66,9 @@ describe("MessageService Unit test suite", (): void => {
     return mockSocket;
   };
   test(`Test ${number++}: should be able to create a new MessageService and start expecting connections`, (): void => {
-    messageService.run();
-    simulateClientConnection();
+    const mockServer = createMockServer();
+    const ms = new MessageService(mockServer, mockMessageRepository);
+    ms.run();
     expect(mockServer.on).toHaveBeenCalledWith(
       "connection",
       expect.any(Function),
