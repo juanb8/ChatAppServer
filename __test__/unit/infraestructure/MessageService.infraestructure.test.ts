@@ -2,6 +2,7 @@ import type { Socket, Server } from "socket.io";
 import type { MessageRepository } from "../../../src/domain/repositories/MessageRepository.domain";
 import { MessageService } from "../../../src/infraestructure/MessageService.infraestructure";
 import { createMockSocket, createMockServer } from "./SocketIo.mock";
+import type { UserRepository } from "../../../src/domain/repositories/UserRepository.domain";
 
 let number = 0;
 jest.mock("socket.io");
@@ -26,6 +27,15 @@ const mockMessageRepository: MessageRepository = {
     ),
 };
 
+const mockUserRepository: UserRepository = {
+  loginUser: jest
+    .fn()
+    .mockImplementation(async (_userId: string): Promise<boolean> => {
+      console.log("loginUser");
+      return Promise.resolve(true);
+    }),
+};
+
 describe("MessageService Unit test suite", (): void => {
   let messageService: MessageService;
   let mockServer: jest.Mocked<Server>;
@@ -44,7 +54,11 @@ describe("MessageService Unit test suite", (): void => {
 
   beforeEach((): void => {
     mockServer = createMockServer();
-    messageService = new MessageService(mockServer, mockMessageRepository);
+    messageService = new MessageService(
+      mockServer,
+      mockMessageRepository,
+      mockUserRepository,
+    );
 
     // mocking server 'on' implementation
     mockServer.on.mockImplementation(
@@ -52,7 +66,6 @@ describe("MessageService Unit test suite", (): void => {
         event: string,
         callback: (...args: any[]) => any,
       ): jest.Mocked<Server> => {
-        console.log("entró en on");
         if (event === "connection")
           connectionCallback = callback as (socket: Socket) => void;
         return mockServer;
@@ -83,5 +96,6 @@ describe("MessageService Unit test suite", (): void => {
     const socket = simulateClientConnection();
     expect(socket.on).toHaveBeenCalledWith("LOGIN", expect.any(Function));
     expect(socket.emit).toHaveBeenCalledWith("LOGIN_ACK", "ok");
+    expect(mockUserRepository.loginUser).toHaveBeenCalled();
   });
 });

@@ -1,10 +1,13 @@
 import { Server, Socket } from "socket.io";
 import type { MessageRepository } from "../domain/repositories/MessageRepository.domain";
+import type { UserRepository } from "../domain/repositories/UserRepository.domain";
+import type { LoginInfo } from "./schemas/Message-schema";
 
 export class MessageService {
   constructor(
     private io: Server,
     private messageRepository: MessageRepository,
+    private userRepository: UserRepository,
   ) {}
 
   disconnectionHandler(socket: Socket): void {
@@ -30,11 +33,17 @@ export class MessageService {
     }
   }
   run(): void {
-    this.io.on("connection", (socket: Socket): void => {
+    this.io.on("connection", async (socket: Socket): Promise<void> => {
       // Handles socket disconnection
       this.disconnectionHandler(socket);
-      socket.on("LOGIN", () => {
-        socket.emit("LOGIN_ACK", "ok");
+      socket.on("LOGIN", async (login: LoginInfo): Promise<void> => {
+        try {
+          const x = await this.userRepository.loginUser(login.userId);
+          if (x) socket.emit("LOGIN_ACK", "ok");
+          else socket.emit("LOGIN_ACK", "not ok");
+        } catch (error) {
+          console.error("DB error");
+        }
       });
     });
   }
