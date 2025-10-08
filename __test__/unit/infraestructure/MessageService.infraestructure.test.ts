@@ -88,12 +88,13 @@ describe("MessageService Unit test suite", (): void => {
     );
   });
   test(`Test ${number++}: should be able to handle socket discconection`, (): void => {
-    messageServiceOnConnectionShouldHandleTheEvent("disconnect");
+:all    messageServiceOnConnectionShouldHandleTheEvent("disconnect");
   });
-  test(`Test ${number++}: should be able to handle LOGIN event`, (): void => {
+  test(`Test ${number++}: should be able to handle LOGIN event`, async (): Promise<void> => {
     //    messageServiceOnConnectionShouldHandleTheEvent('LOGIN');
     messageService.run();
     const socket = simulateClientConnection();
+    await new Promise(process.nextTick);
     expect(socket.on).toHaveBeenCalledWith("LOGIN", expect.any(Function));
     expect(socket.emit).toHaveBeenCalledWith("LOGIN_ACK", "ok");
     expect(mockUserRepository.loginUser).toHaveBeenCalled();
