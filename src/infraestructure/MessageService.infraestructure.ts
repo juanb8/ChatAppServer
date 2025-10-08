@@ -36,18 +36,25 @@ export class MessageService {
     this.io.on("connection", async (socket: Socket): Promise<void> => {
       // Handles socket disconnection
       this.disconnectionHandler(socket);
-      socket.on("LOGIN", async (login: LoginInfo): Promise<void> => {
-        try {
-          const x = await this.userRepository.loginUser(login.userId);
-          if (x) socket.emit("LOGIN_ACK", "ok");
-          else socket.emit("LOGIN_ACK", "not ok");
-        } catch (error) {
-          console.error("DB error");
-        }
-      });
+      socket.on(
+        "LOGIN",
+        async (login: LoginInfo): Promise<void> => this.logUser(socket, login),
+      );
+      socket.on("GENERAL", (): void => {});
+      socket.on("START_CHAT", (): void => {});
+      socket.on("CHAT_ROOM", (): void => {});
     });
   }
 
+  async logUser(socket: Socket, login: LoginInfo): Promise<void> {
+    try {
+      const x = await this.userRepository.loginUser(login.userId);
+      if (x) socket.emit("LOGIN_ACK", "ok");
+      else socket.emit("LOGIN_ACK", "not ok");
+    } catch (error) {
+      console.error("DB error");
+    }
+  }
   async exec(): Promise<void> {
     this.io.on("connection", async (socket) => {
       console.log("a user connected");

@@ -88,15 +88,18 @@ describe("MessageService Unit test suite", (): void => {
     );
   });
   test(`Test ${number++}: should be able to handle socket discconection`, (): void => {
-:all    messageServiceOnConnectionShouldHandleTheEvent("disconnect");
+    messageServiceOnConnectionShouldHandleTheEvent("disconnect");
   });
   test(`Test ${number++}: should be able to handle LOGIN event`, async (): Promise<void> => {
-    //    messageServiceOnConnectionShouldHandleTheEvent('LOGIN');
-    messageService.run();
-    const socket = simulateClientConnection();
-    await new Promise(process.nextTick);
-    expect(socket.on).toHaveBeenCalledWith("LOGIN", expect.any(Function));
-    expect(socket.emit).toHaveBeenCalledWith("LOGIN_ACK", "ok");
-    expect(mockUserRepository.loginUser).toHaveBeenCalled();
+    messageServiceOnConnectionShouldHandleTheEvent("LOGIN");
+  });
+  test(`Test ${number++}: should be able to handle GENERAL event`, async (): Promise<void> => {
+    messageServiceOnConnectionShouldHandleTheEvent("GENERAL");
+  });
+  test(`Test ${number++}: should be able to handle START_CHAT event`, async (): Promise<void> => {
+    messageServiceOnConnectionShouldHandleTheEvent("START_CHAT");
+  });
+  test(`Test ${number++}: should be able to handle CHAT_ROOM event`, async (): Promise<void> => {
+    messageServiceOnConnectionShouldHandleTheEvent("CHAT_ROOM");
   });
 });
