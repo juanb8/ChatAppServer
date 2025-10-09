@@ -11,5 +11,8 @@ type Message = {
   message: string;
 };
 type RoomId = string;
-
-export type { LoginInfo, UserId, Message, RoomId };
+type SignupInfo = {
+  userName: string | undefined;
+  userEmail: string | undefined;
+};
+export type { LoginInfo, SignupInfo, UserId, Message, RoomId };

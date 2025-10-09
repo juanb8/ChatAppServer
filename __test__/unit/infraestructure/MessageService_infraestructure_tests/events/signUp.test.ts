@@ -6,14 +6,17 @@ import {
   createMockServer,
 } from "../.././mocks/SocketIo.mock";
 import type { UserRepository } from "../../../../../src/domain/repositories/UserRepository.domain";
-import type { LoginInfo } from "../../../../../src/infraestructure/schemas/Message-schema";
+import type {
+  LoginInfo,
+  SignupInfo,
+} from "../../../../../src/infraestructure/schemas/Message-schema";
 import {
-  invalid_user_ack,
-  valid_user_ack,
+  correct_signup_message,
+  incorrect_signup_message,
 } from "../../../../../src/infraestructure/messages/server_messages";
 import {
-  LOGIN,
-  LOGIN_ACK,
+  SIGNUP,
+  SIGNUP_ACK,
 } from "../../../../../src/infraestructure/events/Event_definitions";
 import { createMockUserRepository } from "../.././mocks/UserRepository.mock";
 import { createMessageRepository } from "../../mocks/MessageRepository.mock";
@@ -67,9 +70,14 @@ describe("Login event test suite", (): void => {
     if (connectionCallback) connectionCallback(mockSocket);
     return mockSocket;
   };
-  test(`Test ${number++}: should be able to handle LOGIN event`, async (): Promise<void> => {
-    messageServiceOnConnectionShouldHandleTheEvent(LOGIN, expect.any(Function));
+
+  test(`Test ${number++}: should be able to handle SIGNUP event`, async (): Promise<void> => {
+    messageServiceOnConnectionShouldHandleTheEvent(
+      SIGNUP,
+      expect.any(Function),
+    );
   });
+
   test(`Test ${number++}: login a user should check on the UserRepository`, async (): Promise<void> => {
     const socket = createMockSocket();
     const login: LoginInfo = {
@@ -83,14 +91,16 @@ describe("Login event test suite", (): void => {
   });
   test(`Test ${number++}: login a valid user should emit a valid user ack message`, async (): Promise<void> => {
     const socket = createMockSocket();
-    const login: LoginInfo = {
-      userId: "0000",
+    const signupInfo: SignupInfo = {
       userName: "johnDow",
       userEmail: "user@mail",
     };
 
-    await messageService.logUser(socket, login);
-    expect(socket.emit).toHaveBeenCalledWith(LOGIN_ACK, valid_user_ack);
+    await messageService.signup(socket, signupInfo);
+    expect(socket.emit).toHaveBeenCalledWith(
+      SIGNUP_ACK,
+      correct_signup_message,
+    );
   });
   test(`Test ${number++}: login an  invalid user should emit a invalid user ack message`, async (): Promise<void> => {
     const socket = createMockSocket();

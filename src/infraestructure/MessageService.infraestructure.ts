@@ -1,20 +1,29 @@
 import { Server, Socket } from "socket.io";
 import type { MessageRepository } from "../domain/repositories/MessageRepository.domain";
 import type { UserRepository } from "../domain/repositories/UserRepository.domain";
-import type { LoginInfo } from "./schemas/Message-schema";
-import { invalid_user_ack, valid_user_ack } from "./messages/server_messages";
-import { LOGIN, LOGIN_ACK } from "./events/Event_definitions";
+import type { LoginInfo, SignupInfo } from "./schemas/Message-schema";
+import {
+  correct_signup_message,
+  invalid_user_ack,
+  valid_user_ack,
+} from "./messages/server_messages";
+import {
+  LOGIN,
+  LOGIN_ACK,
+  SIGNUP,
+  SIGNUP_ACK,
+} from "./events/Event_definitions";
+import { log } from "console";
 
 export class MessageService {
   constructor(
     private io: Server,
     private messageRepository: MessageRepository,
     private userRepository: UserRepository,
-  ) { }
+  ) {}
 
   disconnectionHandler(socket: Socket): void {
-    socket.on("disconnect", () => {
-    });
+    socket.on("disconnect", () => {});
   }
 
   sendMessage(msg: string, id: number): void {
@@ -41,32 +50,34 @@ export class MessageService {
         LOGIN,
         async (login: LoginInfo): Promise<void> => this.logUser(socket, login),
       );
-      socket.on("GENERAL", (): void => { });
-      socket.on("START_CHAT", (): void => { });
-      socket.on("CHAT_ROOM", (): void => { });
+      socket.on(
+        SIGNUP,
+        async (signupInfo: SignupInfo): Promise<void> =>
+          this.signup(socket, signupInfo),
+      );
+      socket.on("GENERAL", (): void => {});
+      socket.on("START_CHAT", (): void => {});
+      socket.on("CHAT_ROOM", (): void => {});
     });
   }
 
+  async signup(_socket: Socket, _signupInfo: SignupInfo): Promise<void> {
+    _socket.emit(SIGNUP_ACK, correct_signup_message);
+  }
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
-    console.log("Enters log user");
-
     try {
-      console.log("awaits for userRepository ");
-
-      const x = await this.userRepository.loginUser(login.userId);
-      console.log("user repository ended correctly");
-      if (x) socket.emit(LOGIN_ACK, valid_user_ack);
-      else socket.emit(LOGIN_ACK, invalid_user_ack);
+      if (login !== undefined) {
+        const x = await this.userRepository.loginUser(login.userId);
+        if (x) socket.emit(LOGIN_ACK, valid_user_ack);
+        else socket.emit(LOGIN_ACK, invalid_user_ack);
+      } else socket.emit(LOGIN_ACK, invalid_user_ack);
     } catch (error) {
-      console.log("Catches de error");
-
-      console.error("DB error");
+      let err = error as Error;
+      console.error("DataBase error:", err.message);
     }
   }
   async exec(): Promise<void> {
     this.io.on("connection", async (socket) => {
-      console.log("a user connected");
-
       // For now, informs disconnections
       this.disconnectionHandler(socket);
 

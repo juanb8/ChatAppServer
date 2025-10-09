@@ -1,6 +1,5 @@
-const LOGIN = 'LOGIN';
-const LOGIN_ACK = 'LOGIN_ACK';
-export {
-  LOGIN,
-  LOGIN_ACK,
-};
+const LOGIN = "LOGIN";
+const LOGIN_ACK = "LOGIN_ACK";
+const SIGNUP = "SIGNUP";
+const SIGNUP_ACK = "SIGNUP_ACK";
+export { LOGIN, LOGIN_ACK, SIGNUP, SIGNUP_ACK };
