@@ -2,17 +2,18 @@ import { Server, Socket } from "socket.io";
 import type { MessageRepository } from "../domain/repositories/MessageRepository.domain";
 import type { UserRepository } from "../domain/repositories/UserRepository.domain";
 import type { LoginInfo } from "./schemas/Message-schema";
+import { invalid_user_ack, valid_user_ack } from "./messages/server_messages";
+import { LOGIN, LOGIN_ACK } from "./events/Event_definitions";
 
 export class MessageService {
   constructor(
     private io: Server,
     private messageRepository: MessageRepository,
     private userRepository: UserRepository,
-  ) {}
+  ) { }
 
   disconnectionHandler(socket: Socket): void {
     socket.on("disconnect", () => {
-      console.log("user disconnected");
     });
   }
 
@@ -37,21 +38,28 @@ export class MessageService {
       // Handles socket disconnection
       this.disconnectionHandler(socket);
       socket.on(
-        "LOGIN",
+        LOGIN,
         async (login: LoginInfo): Promise<void> => this.logUser(socket, login),
       );
-      socket.on("GENERAL", (): void => {});
-      socket.on("START_CHAT", (): void => {});
-      socket.on("CHAT_ROOM", (): void => {});
+      socket.on("GENERAL", (): void => { });
+      socket.on("START_CHAT", (): void => { });
+      socket.on("CHAT_ROOM", (): void => { });
     });
   }
 
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
+    console.log("Enters log user");
+
     try {
+      console.log("awaits for userRepository ");
+
       const x = await this.userRepository.loginUser(login.userId);
-      if (x) socket.emit("LOGIN_ACK", "ok");
-      else socket.emit("LOGIN_ACK", "not ok");
+      console.log("user repository ended correctly");
+      if (x) socket.emit(LOGIN_ACK, valid_user_ack);
+      else socket.emit(LOGIN_ACK, invalid_user_ack);
     } catch (error) {
+      console.log("Catches de error");
+
       console.error("DB error");
     }
   }

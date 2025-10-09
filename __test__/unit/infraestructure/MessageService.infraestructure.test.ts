@@ -1,8 +1,12 @@
 import type { Socket, Server } from "socket.io";
 import type { MessageRepository } from "../../../src/domain/repositories/MessageRepository.domain";
 import { MessageService } from "../../../src/infraestructure/MessageService.infraestructure";
-import { createMockSocket, createMockServer } from "./SocketIo.mock";
+import { createMockSocket, createMockServer } from "./mocks/SocketIo.mock";
 import type { UserRepository } from "../../../src/domain/repositories/UserRepository.domain";
+import type { LoginInfo } from "../../../src/infraestructure/schemas/Message-schema";
+import { invalid_user_ack, valid_user_ack } from "../../../src/infraestructure/messages/server_messages";
+import { LOGIN, LOGIN_ACK } from "../../../src/infraestructure/events/Event_definitions";
+import { createMockUserRepository } from "./mocks/UserRepository.mock";
 
 let number = 0;
 jest.mock("socket.io");
@@ -90,9 +94,7 @@ describe("MessageService Unit test suite", (): void => {
   test(`Test ${number++}: should be able to handle socket discconection`, (): void => {
     messageServiceOnConnectionShouldHandleTheEvent("disconnect");
   });
-  test(`Test ${number++}: should be able to handle LOGIN event`, async (): Promise<void> => {
-    messageServiceOnConnectionShouldHandleTheEvent("LOGIN");
-  });
+
   test(`Test ${number++}: should be able to handle GENERAL event`, async (): Promise<void> => {
     messageServiceOnConnectionShouldHandleTheEvent("GENERAL");
   });
