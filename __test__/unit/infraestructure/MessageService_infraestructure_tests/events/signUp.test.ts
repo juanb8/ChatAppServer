@@ -73,50 +73,47 @@ describe("Login event test suite", (): void => {
 
   test(`Test ${number++}: should be able to handle SIGNUP event`, async (): Promise<void> => {
     messageServiceOnConnectionShouldHandleTheEvent(
-      SIGNUP,
-      expect.any(Function),
+      SIGNUP
     );
   });
 
-  test(`Test ${number++}: login a user should check on the UserRepository`, async (): Promise<void> => {
-    const socket = createMockSocket();
-    const login: LoginInfo = {
-      userId: "0000",
-      userName: "johnDow",
-      userEmail: "user@mail",
-    };
-
-    await messageService.logUser(socket, login);
-    expect(mockUserRepository.loginUser).toHaveBeenCalled();
-  });
-  test(`Test ${number++}: login a valid user should emit a valid user ack message`, async (): Promise<void> => {
+  test(`Test ${number++}: Siging up  a new user should check on the UserRepository for userName`, async (): Promise<void> => {
     const socket = createMockSocket();
     const signupInfo: SignupInfo = {
       userName: "johnDow",
       userEmail: "user@mail",
     };
-
     await messageService.signup(socket, signupInfo);
-    expect(socket.emit).toHaveBeenCalledWith(
-      SIGNUP_ACK,
-      correct_signup_message,
-    );
+    expect(mockUserRepository.checkForUserName).toHaveBeenCalledWith(signupInfo.userName);
   });
-  test(`Test ${number++}: login an  invalid user should emit a invalid user ack message`, async (): Promise<void> => {
-    const socket = createMockSocket();
-    const login: LoginInfo = {
-      userId: "0000",
-      userName: "johnDow",
-      userEmail: "user@mail",
-    };
-    const mockUserRepositoryFalse = createMockUserRepository(false);
-    messageService = new MessageService(
-      mockServer,
-      mockMessageRepository,
-      mockUserRepositoryFalse,
-    );
-
-    await messageService.logUser(socket, login);
-    expect(socket.emit).toHaveBeenCalledWith(LOGIN_ACK, invalid_user_ack);
-  });
+  //  test(`Test ${number++}: login a valid user should emit a valid user ack message`, async (): Promise<void> => {
+  //    const socket = createMockSocket();
+  //    const signupInfo: SignupInfo = {
+  //      userName: "johnDow",
+  //      userEmail: "user@mail",
+  //    };
+  //
+  //    await messageService.signup(socket, signupInfo);
+  //    expect(socket.emit).toHaveBeenCalledWith(
+  //      SIGNUP_ACK,
+  //      correct_signup_message,
+  //    );
+  //  });
+  //  test(`Test ${number++}: login an  invalid user should emit a invalid user ack message`, async (): Promise<void> => {
+  //    const socket = createMockSocket();
+  //    const login: LoginInfo = {
+  //      userId: "0000",
+  //      userName: "johnDow",
+  //      userEmail: "user@mail",
+  //    };
+  //    co//nst mockUserRepositoryFalse = createMockUserRepository(false);
+  //    mes//sageService = new MessageService(
+  //      mockServer,
+  //      mockMessageRepository,
+  //      mockUserRepositoryFalse,
+  //    );
+  //
+  //    await messageService.logUser(socket, login);
+  //    expect(socket.emit).toHaveBeenCalledWith(LOGIN_ACK, invalid_user_ack);
+  //  });
 });

@@ -13,17 +13,16 @@ import {
   SIGNUP,
   SIGNUP_ACK,
 } from "./events/Event_definitions";
-import { log } from "console";
 
 export class MessageService {
   constructor(
     private io: Server,
     private messageRepository: MessageRepository,
     private userRepository: UserRepository,
-  ) {}
+  ) { }
 
   disconnectionHandler(socket: Socket): void {
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", () => { });
   }
 
   sendMessage(msg: string, id: number): void {
@@ -55,14 +54,23 @@ export class MessageService {
         async (signupInfo: SignupInfo): Promise<void> =>
           this.signup(socket, signupInfo),
       );
-      socket.on("GENERAL", (): void => {});
-      socket.on("START_CHAT", (): void => {});
-      socket.on("CHAT_ROOM", (): void => {});
+      socket.on("GENERAL", (): void => { });
+      socket.on("START_CHAT", (): void => { });
+      socket.on("CHAT_ROOM", (): void => { });
     });
   }
 
+  async validSignUp(signupInfo: SignupInfo): Promise<boolean> {
+    console.log("signupInfo:", signupInfo);
+
+    const isUserNameTaken = await this.userRepository.checkForUserName(signupInfo.userName);
+    const isEmailTaken = await this.userRepository.checkForEmail(signupInfo.userEmail);
+    return !isEmailTaken && !isUserNameTaken;
+  }
   async signup(_socket: Socket, _signupInfo: SignupInfo): Promise<void> {
-    _socket.emit(SIGNUP_ACK, correct_signup_message);
+    const isValidUser = await this.validSignUp(_signupInfo);
+    if (isValidUser)
+      _socket.emit(SIGNUP_ACK, correct_signup_message);
   }
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
     try {

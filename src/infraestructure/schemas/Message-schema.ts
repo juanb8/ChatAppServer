@@ -12,7 +12,7 @@ type Message = {
 };
 type RoomId = string;
 type SignupInfo = {
-  userName: string | undefined;
-  userEmail: string | undefined;
+  userName: string;
+  userEmail: string;
 };
 export type { LoginInfo, SignupInfo, UserId, Message, RoomId };
