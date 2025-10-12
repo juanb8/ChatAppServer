@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import type { MessageRepository } from "../domain/repositories/MessageRepository.domain";
 import type { UserRepository } from "../domain/repositories/UserRepository.domain";
-import type { LoginInfo, SignupInfo } from "./schemas/Message-schema";
+import type { LoginInfo, SignupInfo, UserId } from "./schemas/Message-schema";
 import {
   correct_signup_message,
   invalid_user_ack,
@@ -61,16 +61,18 @@ export class MessageService {
   }
 
   async validSignUp(signupInfo: SignupInfo): Promise<boolean> {
-    console.log("signupInfo:", signupInfo);
-
+    if (signupInfo === undefined) return false;
     const isUserNameTaken = await this.userRepository.checkForUserName(signupInfo.userName);
     const isEmailTaken = await this.userRepository.checkForEmail(signupInfo.userEmail);
     return !isEmailTaken && !isUserNameTaken;
   }
   async signup(_socket: Socket, _signupInfo: SignupInfo): Promise<void> {
     const isValidUser = await this.validSignUp(_signupInfo);
-    if (isValidUser)
+    let userId: UserId;
+    if (isValidUser) {
+      userId = await this.userRepository.signUp(_signupInfo);
       _socket.emit(SIGNUP_ACK, correct_signup_message);
+    }
   }
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
     try {

@@ -7,7 +7,6 @@ import {
 } from "../.././mocks/SocketIo.mock";
 import type { UserRepository } from "../../../../../src/domain/repositories/UserRepository.domain";
 import type {
-  LoginInfo,
   SignupInfo,
 } from "../../../../../src/infraestructure/schemas/Message-schema";
 import {
@@ -32,6 +31,7 @@ describe("Login event test suite", (): void => {
   let mockServer: jest.Mocked<Server>;
   let connectedSockets: jest.Mocked<Socket>[] = [];
   let connectionCallback: ((socket: Socket) => void) | null = null;
+  let signupInfo: SignupInfo;
 
   const messageServiceOnConnectionShouldHandleTheEvent = (
     event: string,
@@ -50,6 +50,10 @@ describe("Login event test suite", (): void => {
       mockMessageRepository,
       mockUserRepository,
     );
+    signupInfo = {
+      userName: "johnDow",
+      userEmail: "user@mail",
+    };
 
     // mocking server 'on' implementation
     mockServer.on.mockImplementation(
@@ -77,15 +81,31 @@ describe("Login event test suite", (): void => {
     );
   });
 
-  test(`Test ${number++}: Siging up  a new user should check on the UserRepository for userName`, async (): Promise<void> => {
-    const socket = createMockSocket();
-    const signupInfo: SignupInfo = {
-      userName: "johnDow",
-      userEmail: "user@mail",
-    };
-    await messageService.signup(socket, signupInfo);
+  test(`Test ${number++}: Signing up  a new user should check on the UserRepository for userName`, async (): Promise<void> => {
+    await signUpWithCorrectInformation();
     expect(mockUserRepository.checkForUserName).toHaveBeenCalledWith(signupInfo.userName);
   });
+
+  test(`Test ${number++}: Signing up  a new user should check on the UserRepository for user email`, async (): Promise<void> => {
+    await signUpWithCorrectInformation();
+    expect(mockUserRepository.checkForEmail).toHaveBeenCalledWith(signupInfo.userEmail);
+  });
+
+  test(`Test ${number++}: Signing up  a new valid user should emit SIGNUP_ACK`, async (): Promise<void> => {
+    const socket = createMockSocket();
+    await messageService.signup(socket, signupInfo);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, correct_signup_message);
+  });
+
+  test(`Test ${number++}: Signing up a new user valid user should signUp on the message repository`, async (): Promise<void> => {
+    await signUpWithCorrectInformation();
+    expect(mockUserRepository.signUp).toHaveBeenCalledWith(signupInfo);
+  })
+
+  async function signUpWithCorrectInformation(): Promise<void> {
+    const socket = createMockSocket();
+    await messageService.signup(socket, signupInfo);
+  }
   //  test(`Test ${number++}: login a valid user should emit a valid user ack message`, async (): Promise<void> => {
   //    const socket = createMockSocket();
   //    const signupInfo: SignupInfo = {
