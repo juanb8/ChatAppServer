@@ -12,6 +12,8 @@ import type {
 import {
   correct_signup_message,
   incorrect_signup_message,
+  user_email_already_sign_up,
+  user_name_already_taken,
 } from "../../../../../src/infraestructure/messages/server_messages";
 import {
   SIGNUP,
@@ -26,7 +28,7 @@ jest.mock("socket.io");
 const mockMessageRepository: MessageRepository = createMessageRepository();
 const mockUserRepository: UserRepository = createMockUserRepository();
 
-describe("Login event test suite", (): void => {
+describe("Sign Up event test suite", (): void => {
   let messageService: MessageService;
   let mockServer: jest.Mocked<Server>;
   let connectedSockets: jest.Mocked<Socket>[] = [];
@@ -100,40 +102,32 @@ describe("Login event test suite", (): void => {
   test(`Test ${number++}: Signing up a new user valid user should signUp on the message repository`, async (): Promise<void> => {
     await signUpWithCorrectInformation();
     expect(mockUserRepository.signUp).toHaveBeenCalledWith(signupInfo);
-  })
+  });
+  test(`Test ${number++}: Signing up a user with an existing userEmail should emit SIGNUP_ACK with incorrect_signup_message`, async (): Promise<void> => {
+    const socket = createMockSocket();
+    await messageService.signup(socket, signupInfo);
+    mockUserRepository.checkForEmail = jest.fn().mockImplementation(async (_userName: string): Promise<boolean> => {
+      return Promise.resolve(true);
+    });
+    await messageService.signup(socket, signupInfo);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, correct_signup_message);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_name_already_taken);
+  });
+
+  test(`Test ${number++}: Signing up a user with an existing userName should emit SIGNUP_ACK with incorrect_signup_message`, async (): Promise<void> => {
+    const socket = createMockSocket();
+    await messageService.signup(socket, signupInfo);
+    mockUserRepository.checkForUserName = jest.fn().mockImplementation(async (_userName: string): Promise<boolean> => {
+      return Promise.resolve(true);
+    });
+    await messageService.signup(socket, signupInfo);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_email_already_sign_up);
+  });
+
+
 
   async function signUpWithCorrectInformation(): Promise<void> {
     const socket = createMockSocket();
     await messageService.signup(socket, signupInfo);
   }
-  //  test(`Test ${number++}: login a valid user should emit a valid user ack message`, async (): Promise<void> => {
-  //    const socket = createMockSocket();
-  //    const signupInfo: SignupInfo = {
-  //      userName: "johnDow",
-  //      userEmail: "user@mail",
-  //    };
-  //
-  //    await messageService.signup(socket, signupInfo);
-  //    expect(socket.emit).toHaveBeenCalledWith(
-  //      SIGNUP_ACK,
-  //      correct_signup_message,
-  //    );
-  //  });
-  //  test(`Test ${number++}: login an  invalid user should emit a invalid user ack message`, async (): Promise<void> => {
-  //    const socket = createMockSocket();
-  //    const login: LoginInfo = {
-  //      userId: "0000",
-  //      userName: "johnDow",
-  //      userEmail: "user@mail",
-  //    };
-  //    co//nst mockUserRepositoryFalse = createMockUserRepository(false);
-  //    mes//sageService = new MessageService(
-  //      mockServer,
-  //      mockMessageRepository,
-  //      mockUserRepositoryFalse,
-  //    );
-  //
-  //    await messageService.logUser(socket, login);
-  //    expect(socket.emit).toHaveBeenCalledWith(LOGIN_ACK, invalid_user_ack);
-  //  });
 });

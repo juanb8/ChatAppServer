@@ -4,7 +4,10 @@ import type { UserRepository } from "../domain/repositories/UserRepository.domai
 import type { LoginInfo, SignupInfo, UserId } from "./schemas/Message-schema";
 import {
   correct_signup_message,
+  incorrect_signup_message,
   invalid_user_ack,
+  user_name_already_taken,
+  user_email_already_sign_up,
   valid_user_ack,
 } from "./messages/server_messages";
 import {
@@ -66,14 +69,43 @@ export class MessageService {
     const isEmailTaken = await this.userRepository.checkForEmail(signupInfo.userEmail);
     return !isEmailTaken && !isUserNameTaken;
   }
+
   async signup(_socket: Socket, _signupInfo: SignupInfo): Promise<void> {
-    const isValidUser = await this.validSignUp(_signupInfo);
-    let userId: UserId;
-    if (isValidUser) {
-      userId = await this.userRepository.signUp(_signupInfo);
-      _socket.emit(SIGNUP_ACK, correct_signup_message);
-    }
+    interface User {
+      handleSignUp: (socket: Socket) => Promise<void>;
+    };
+    class ValidUser implements User {
+      constructor(private userRepository: UserRepository, private signupInfo: SignupInfo) { };
+      async handleSignUp(socket: Socket): Promise<void> {
+        const userId = await this.userRepository.signUp(this.signupInfo);
+        socket.emit(SIGNUP_ACK, correct_signup_message);
+      }
+    };
+    class UserInvalidUserName implements User {
+      constructor(private _userRepository: UserRepository, private _signupInfo: SignupInfo) { };
+      async handleSignUp(socket: Socket): Promise<void> {
+        socket.emit(SIGNUP_ACK, user_name_already_taken);
+      }
+    };
+    class UserInvalidUserEmail implements User {
+      constructor(private _userRepository: UserRepository, private _signupInfo: SignupInfo) { };
+      async handleSignUp(socket: Socket): Promise<void> {
+        socket.emit(SIGNUP_ACK, user_email_already_sign_up);
+      }
+    };
+
+    async function userFactory(userRepository: UserRepository, signupInfo: SignupInfo): Promise<User> {
+      const isUserNameTaken = await userRepository.checkForUserName(signupInfo.userName);
+      if (isUserNameTaken) return new UserInvalidUserName(userRepository, signupInfo);
+      const isEmailTaken = await userRepository.checkForEmail(signupInfo.userEmail);
+      if (isEmailTaken) return new UserInvalidUserEmail(userRepository, signupInfo);
+      return new ValidUser(userRepository, signupInfo);
+    };
+
+    const user = await userFactory(this.userRepository, _signupInfo);
+    await user.handleSignUp(_socket);
   }
+
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
     try {
       if (login !== undefined) {
