@@ -7,6 +7,8 @@ const incorrect_signup_message = "not ok";
 const user_name_already_taken = "user name already taken";
 const user_email_already_sign_up = "user email already sign up";
 
+const database_error_message = "There was a database error: ";
+
 export {
   valid_user_ack,
   invalid_user_ack,
@@ -14,4 +16,5 @@ export {
   incorrect_signup_message,
   user_name_already_taken,
   user_email_already_sign_up,
+  database_error_message
 };

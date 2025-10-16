@@ -1,6 +1,6 @@
 import type { Socket, Server } from "socket.io";
 import type { MessageRepository } from "../../../../../src/domain/repositories/MessageRepository.domain";
-import { MessageService } from "../../../../../src/infraestructure/MessageService.infraestructure";
+import { MessageService } from "../../../../../src/infraestructure/services/MessageService.infraestructure";
 import {
   createMockSocket,
   createMockServer,

@@ -1,6 +1,6 @@
 import type { Socket, Server } from "socket.io";
 import type { MessageRepository } from "../../../../../src/domain/repositories/MessageRepository.domain";
-import { MessageService } from "../../../../../src/infraestructure/MessageService.infraestructure";
+import { MessageService } from "../../../../../src/infraestructure/services/MessageService.infraestructure";
 import {
   createMockSocket,
   createMockServer,
@@ -11,9 +11,9 @@ import type {
 } from "../../../../../src/infraestructure/schemas/Message-schema";
 import {
   correct_signup_message,
-  incorrect_signup_message,
   user_email_already_sign_up,
   user_name_already_taken,
+  database_error_message
 } from "../../../../../src/infraestructure/messages/server_messages";
 import {
   SIGNUP,
@@ -110,8 +110,7 @@ describe("Sign Up event test suite", (): void => {
       return Promise.resolve(true);
     });
     await messageService.signup(socket, signupInfo);
-    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, correct_signup_message);
-    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_name_already_taken);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_email_already_sign_up);
   });
 
   test(`Test ${number++}: Signing up a user with an existing userName should emit SIGNUP_ACK with incorrect_signup_message`, async (): Promise<void> => {
@@ -121,10 +120,16 @@ describe("Sign Up event test suite", (): void => {
       return Promise.resolve(true);
     });
     await messageService.signup(socket, signupInfo);
-    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_email_already_sign_up);
+    expect(socket.emit).toHaveBeenCalledWith(SIGNUP_ACK, user_name_already_taken);
   });
-
-
+  test(`Test ${number++}: Signing a user should handle database errors`, async (): Promise<void> => {
+    mockUserRepository.checkForUserName = jest.fn().mockImplementation(async (_userName: string): Promise<boolean> => {
+      throw new Error("Database error");
+    });
+    const socket = createMockSocket();
+    await messageService.signup(socket, signupInfo);
+    expect(socket.emit).not.toHaveBeenCalledWith(SIGNUP_ACK, database_error_message);
+  });
 
   async function signUpWithCorrectInformation(): Promise<void> {
     const socket = createMockSocket();

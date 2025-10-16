@@ -1,21 +1,21 @@
 import { Server, Socket } from "socket.io";
-import type { MessageRepository } from "../domain/repositories/MessageRepository.domain";
-import type { UserRepository } from "../domain/repositories/UserRepository.domain";
-import type { LoginInfo, SignupInfo, UserId } from "./schemas/Message-schema";
+import type { MessageRepository } from "../../domain/repositories/MessageRepository.domain";
+import type { UserRepository } from "../../domain/repositories/UserRepository.domain";
+import type { LoginInfo, SignupInfo, UserId } from "../schemas/Message-schema";
+import type { User } from "../../domain/entities/User.entity";
+import { userFactory } from "../entities/User.infraestructure";
+
 import {
-  correct_signup_message,
-  incorrect_signup_message,
   invalid_user_ack,
-  user_name_already_taken,
-  user_email_already_sign_up,
   valid_user_ack,
-} from "./messages/server_messages";
+  database_error_message,
+} from "../messages/server_messages";
 import {
   LOGIN,
   LOGIN_ACK,
   SIGNUP,
   SIGNUP_ACK,
-} from "./events/Event_definitions";
+} from "../events/Event_definitions";
 
 export class MessageService {
   constructor(
@@ -71,39 +71,16 @@ export class MessageService {
   }
 
   async signup(_socket: Socket, _signupInfo: SignupInfo): Promise<void> {
-    interface User {
-      handleSignUp: (socket: Socket) => Promise<void>;
-    };
-    class ValidUser implements User {
-      constructor(private userRepository: UserRepository, private signupInfo: SignupInfo) { };
-      async handleSignUp(socket: Socket): Promise<void> {
-        const userId = await this.userRepository.signUp(this.signupInfo);
-        socket.emit(SIGNUP_ACK, correct_signup_message);
+    if (_signupInfo) {
+      try {
+        const user = await userFactory(this.userRepository, _signupInfo);
+        await user.handleSignUp();
+        _socket.emit(SIGNUP_ACK, user.message());
+      } catch (error) {
+        const err = error as Error;
+        _socket.emit(SIGNUP_ACK, database_error_message + err.message);
       }
-    };
-    class UserInvalidUserName implements User {
-      constructor(private _userRepository: UserRepository, private _signupInfo: SignupInfo) { };
-      async handleSignUp(socket: Socket): Promise<void> {
-        socket.emit(SIGNUP_ACK, user_name_already_taken);
-      }
-    };
-    class UserInvalidUserEmail implements User {
-      constructor(private _userRepository: UserRepository, private _signupInfo: SignupInfo) { };
-      async handleSignUp(socket: Socket): Promise<void> {
-        socket.emit(SIGNUP_ACK, user_email_already_sign_up);
-      }
-    };
-
-    async function userFactory(userRepository: UserRepository, signupInfo: SignupInfo): Promise<User> {
-      const isUserNameTaken = await userRepository.checkForUserName(signupInfo.userName);
-      if (isUserNameTaken) return new UserInvalidUserName(userRepository, signupInfo);
-      const isEmailTaken = await userRepository.checkForEmail(signupInfo.userEmail);
-      if (isEmailTaken) return new UserInvalidUserEmail(userRepository, signupInfo);
-      return new ValidUser(userRepository, signupInfo);
-    };
-
-    const user = await userFactory(this.userRepository, _signupInfo);
-    await user.handleSignUp(_socket);
+    }
   }
 
   async logUser(socket: Socket, login: LoginInfo): Promise<void> {
