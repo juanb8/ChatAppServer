@@ -15,6 +15,7 @@ import {
   LOGIN_ACK,
   SIGNUP,
   SIGNUP_ACK,
+  START_CHAT,
 } from "../events/Event_definitions";
 
 export class MessageService {
@@ -58,7 +59,7 @@ export class MessageService {
           this.signup(socket, signupInfo),
       );
       socket.on("GENERAL", (): void => { });
-      socket.on("START_CHAT", (): void => { });
+      socket.on(START_CHAT, (): void => { });
       socket.on("CHAT_ROOM", (): void => { });
     });
   }
