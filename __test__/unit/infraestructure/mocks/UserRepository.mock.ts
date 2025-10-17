@@ -15,7 +15,10 @@ export function createMockUserRepository(emitValue: boolean = true, isUserNameTa
     }),
     signUp: jest.fn().mockImplementation(async (_userInfo: SignupInfo): Promise<UserId> => {
       return Promise.resolve('0000');
-    })
+    }),
+    checkForUserId: jest.fn().mockImplementation(async (_userId: UserId): Promise<boolean> => {
+      return Promise.resolve(true);
+    }),
   }
   return userRepository;
 }

@@ -1,8 +1,7 @@
 import { Server, Socket } from "socket.io";
 import type { MessageRepository } from "../../domain/repositories/MessageRepository.domain";
 import type { UserRepository } from "../../domain/repositories/UserRepository.domain";
-import type { LoginInfo, SignupInfo, UserId } from "../schemas/Message-schema";
-import type { User } from "../../domain/entities/User.entity";
+import type { LoginInfo, SignupInfo, StartChatInfo } from "../schemas/Message-schema";
 import { userFactory } from "../entities/User.infraestructure";
 
 import {
@@ -16,6 +15,7 @@ import {
   SIGNUP,
   SIGNUP_ACK,
   START_CHAT,
+  START_CHAT_ACK,
 } from "../events/Event_definitions";
 
 export class MessageService {
@@ -59,9 +59,40 @@ export class MessageService {
           this.signup(socket, signupInfo),
       );
       socket.on("GENERAL", (): void => { });
-      socket.on(START_CHAT, (): void => { });
+      socket.on(START_CHAT, async (startChatInfo: StartChatInfo): Promise<void> => { this.startChat(socket, startChatInfo); });
       socket.on("CHAT_ROOM", (): void => { });
     });
+  }
+  async startChat(_socket: Socket, _startChatInfo: StartChatInfo): Promise<void> {
+    interface ServerResponse {
+      message: Object | string;
+    };
+    class ValidStartChatResponse implements ServerResponse {
+      message(): string {
+        return "roomId1234";
+      }
+    };
+
+    class InvalidStartChatResponse implements ServerResponse {
+      message(): Object {
+        return { type: 'Error', message: 'Invalid sender Id' };
+      }
+    };
+
+    async function createServerResponse(_startChatInfo: StartChatInfo, userRepository: UserRepository): Promise<ServerResponse> {
+      const isSenderValid = await userRepository.checkForUserId(_startChatInfo.senderId);
+      const isReceiverValid = await userRepository.checkForUserId(_startChatInfo.receiverId);
+      if (isSenderValid && isReceiverValid)
+        return new ValidStartChatResponse();
+      else
+        return new InvalidStartChatResponse();
+    };
+
+    if (_startChatInfo) {
+      const res = await createServerResponse(_startChatInfo, this.userRepository);
+      _socket.emit(START_CHAT_ACK, res.message());
+
+    }
   }
 
   async validSignUp(signupInfo: SignupInfo): Promise<boolean> {

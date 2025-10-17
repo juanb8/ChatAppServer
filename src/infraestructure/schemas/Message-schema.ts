@@ -15,4 +15,9 @@ type SignupInfo = {
   userName: string;
   userEmail: string;
 };
-export type { LoginInfo, SignupInfo, UserId, Message, RoomId };
+
+type StartChatInfo = {
+  senderId: UserId;
+  receiverId: UserId;
+};
+export type { LoginInfo, SignupInfo, UserId, Message, RoomId, StartChatInfo };
