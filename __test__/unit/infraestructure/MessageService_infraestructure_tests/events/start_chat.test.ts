@@ -10,16 +10,13 @@ import type {
   SignupInfo,
   UserId,
 } from "../../../../../src/infraestructure/schemas/Message-schema";
-import {
-
-} from "../../../../../src/infraestructure/messages/server_messages";
+import {} from "../../../../../src/infraestructure/messages/server_messages";
 import {
   START_CHAT,
   START_CHAT_ACK,
 } from "../../../../../src/infraestructure/events/Event_definitions";
 import { createMockUserRepository } from "../.././mocks/UserRepository.mock";
 import { createMessageRepository } from "../../mocks/MessageRepository.mock";
-import type { User } from "../../../../../src/domain/entities/User.entity";
 
 let number = 0;
 jest.mock("socket.io");
@@ -32,8 +29,7 @@ describe("Start Chat event Test Suite", (): void => {
   let mockServer: jest.Mocked<Server>;
   let connectedSockets: jest.Mocked<Socket>[] = [];
   let connectionCallback: ((socket: Socket) => void) | null = null;
-  let signupInfo: SignupInfo;
-  let correct_startChatInfo = { senderId: '0000', receiverId: '1111' };
+  let correct_startChatInfo = { senderId: "0000", receiverId: "1111" };
 
   const messageServiceOnConnectionShouldHandleTheEvent = (
     event: string,
@@ -52,11 +48,6 @@ describe("Start Chat event Test Suite", (): void => {
       mockMessageRepository,
       mockUserRepository,
     );
-    signupInfo = {
-      userName: "johnDow",
-      userEmail: "user@mail",
-    };
-
     // mocking server 'on' implementation
     mockServer.on.mockImplementation(
       (
@@ -78,33 +69,54 @@ describe("Start Chat event Test Suite", (): void => {
   };
 
   test(`Test ${number++}: should be able to handle START_CHAT event`, async (): Promise<void> => {
-    messageServiceOnConnectionShouldHandleTheEvent(
-      START_CHAT
-    );
+    messageServiceOnConnectionShouldHandleTheEvent(START_CHAT);
   });
+
   test(`Test ${number++}: the START_CHAT event should be able to handle correct message`, async (): Promise<void> => {
     const socket = await startChatWithInforamtion();
-    const started_chatMessage = 'roomId1234';
-    expect(socket.emit).toHaveBeenCalledWith(START_CHAT_ACK, started_chatMessage);
+    const started_chatMessage = "roomId1234";
+    expect(socket.emit).toHaveBeenCalledWith(
+      START_CHAT_ACK,
+      started_chatMessage,
+    );
   });
   test(`Test ${number++}: the START_CHAT event should check in the user repository  for the sender and receiver`, async (): Promise<void> => {
     await startChatWithInforamtion();
-    expect(mockUserRepository.checkForUserId).toHaveBeenCalledWith(correct_startChatInfo.senderId);
-    expect(mockUserRepository.checkForUserId).toHaveBeenCalledWith(correct_startChatInfo.receiverId);
+    expect(mockUserRepository.checkForUserId).toHaveBeenCalledWith(
+      correct_startChatInfo.senderId,
+    );
+    expect(mockUserRepository.checkForUserId).toHaveBeenCalledWith(
+      correct_startChatInfo.receiverId,
+    );
   });
   test(`Test ${number++}: the START_CHAT event should emit invalid message if the senderId is invalid `, async (): Promise<void> => {
-    mockUserRepository.checkForUserId = jest.fn().mockImplementation(async (_userId: UserId): Promise<boolean> => {
-      return Promise.resolve(false);
-    });
+    change_userRepository_checkForUserId_resolve(false);
     const socket = await startChatWithInforamtion();
-    const sender_invalid_message = { type: 'Error', message: 'Invalid sender Id' };
-    expect(socket.emit).toHaveBeenCalledWith(START_CHAT_ACK, sender_invalid_message);
-
+    const sender_invalid_message = {
+      type: "Error",
+      message: "Invalid sender Id",
+    };
+    expect(socket.emit).toHaveBeenCalledWith(
+      START_CHAT_ACK,
+      sender_invalid_message,
+    );
   });
+  //TODO: UserRepository fail
+  //TODO: unit testing  for making sicket.io rooms
+  //
+  //
+  // utilities
+  function change_userRepository_checkForUserId_resolve(ret: boolean): void {
+    mockUserRepository.checkForUserId = jest
+      .fn()
+      .mockImplementation(async (_userId: UserId): Promise<boolean> => {
+        return Promise.resolve(ret);
+      });
+  }
+
   async function startChatWithInforamtion(): Promise<Socket> {
     const socket = createMockSocket();
     await messageService.startChat(socket, correct_startChatInfo);
     return socket;
-  };
-
+  }
 });
