@@ -10,7 +10,7 @@ import type {
   SignupInfo,
   UserId,
 } from "../../../../../src/infraestructure/schemas/Message-schema";
-import {} from "../../../../../src/infraestructure/messages/server_messages";
+import { database_error_message } from "../../../../../src/infraestructure/messages/server_messages";
 import {
   START_CHAT,
   START_CHAT_ACK,
@@ -99,6 +99,19 @@ describe("Start Chat event Test Suite", (): void => {
     expect(socket.emit).toHaveBeenCalledWith(
       START_CHAT_ACK,
       sender_invalid_message,
+    );
+  });
+
+  test(`Test ${number}: the START_CHAT event should handle UserRepository failure`, async (): Promise<void> => {
+    mockUserRepository.checkForUserId = jest
+      .fn()
+      .mockImplementation(async (_userId: UserId): Promise<void> => {
+        throw new Error("db error");
+      });
+    const socket = startChatWithInforamtion();
+    expect(socket.emit).toHaveBeenCalledWith(
+      START_CHAT_ACK,
+      database_error_message,
     );
   });
   //TODO: UserRepository fail

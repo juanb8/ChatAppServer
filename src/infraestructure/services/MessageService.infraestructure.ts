@@ -104,16 +104,23 @@ export class MessageService {
       if (isSenderValid && isReceiverValid) return new ValidStartChatResponse();
       else return new InvalidStartChatResponse();
     }
-
     if (_startChatInfo) {
-      const res = await createServerResponse(
-        _startChatInfo,
-        this.userRepository,
-      );
-      _socket.emit(START_CHAT_ACK, res.message());
+      try {
+        const res = await createServerResponse(
+          _startChatInfo,
+          this.userRepository,
+        );
+        _socket.emit(START_CHAT_ACK, res.message());
+      } catch (error) {
+        this.handleDataBaseFailure(error as Error);
+        _socket.emit(START_CHAT_ACK, database_error_message);
+      }
     }
   }
 
+  handleDataBaseFailure(err: Error): void {
+    console.error(err.message);
+  }
   async validSignUp(signupInfo: SignupInfo): Promise<boolean> {
     if (signupInfo === undefined) return false;
     const isUserNameTaken = await this.userRepository.checkForUserName(
